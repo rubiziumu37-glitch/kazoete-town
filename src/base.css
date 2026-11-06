@@ -1,0 +1,159 @@
+/* 画面の考え方：水彩の箱庭の町。紙のような明るい空色を地に、
+   カードと箱は「色紙」、操作ボタンは大きく丸く。ゲームの世界なので明るい見た目に固定する */
+:root{
+  --sora:#e6f2f6;      /* 空のような地の色 */
+  --kami:#fffdf8;      /* 紙（カード・パネル） */
+  --sumi:#33414d;      /* 文字 */
+  --usuzumi:#6b7884;   /* うすい文字 */
+  --mint:#7cc7a8;      /* 草のミント（すすむ） */
+  --mint-koi:#3f9c7a;
+  --sango:#ef8a6f;     /* さんご（ちゅうい・えらんでいる） */
+  --suisho:#a28ee0;    /* 水晶のラベンダー */
+  --kin:#f2b84b;       /* コイン・ひかる */
+  --sen:#d9e3e8;       /* 線 */
+  --font:"Zen Maru Gothic","Hiragino Maru Gothic ProN","BIZ UDPGothic","Meiryo",sans-serif;
+  color-scheme:light;
+}
+html,body{height:100%}
+body{margin:0;background:var(--sora);color:var(--sumi);font-family:var(--font);font-weight:500;
+  -webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+#app{min-height:100%;display:flex;flex-direction:column;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:12px;box-sizing:border-box;gap:12px;max-width:1200px;margin:0 auto}
+h1,h2,h3{margin:0;text-wrap:balance}
+button{font-family:inherit;color:inherit;cursor:pointer;touch-action:manipulation}
+button:focus-visible,[role=button]:focus-visible{outline:4px solid var(--suisho);outline-offset:2px}
+.btn{border:0;border-radius:999px;padding:14px 26px;font-size:1.15rem;font-weight:700;background:var(--mint);color:#fff;
+  box-shadow:0 4px 0 var(--mint-koi);transition:transform .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 var(--mint-koi)}
+.btn.sub{background:var(--kami);color:var(--sumi);box-shadow:0 4px 0 var(--sen);border:2px solid var(--sen)}
+.btn.small{padding:8px 16px;font-size:1rem}
+.btn[disabled]{opacity:.45;pointer-events:none}
+.bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.bar .sp{flex:1}
+.pill{display:inline-flex;align-items:center;gap:6px;background:var(--kami);border:2px solid var(--sen);border-radius:999px;
+  padding:6px 14px;font-weight:700;font-variant-numeric:tabular-nums;font-size:1rem}
+.pill img{width:26px;height:26px}
+.panel{background:var(--kami);border-radius:22px;border:2px solid var(--sen);padding:18px}
+.msg{font-size:1.3rem;font-weight:700;text-align:center;min-height:1.6em}
+.sub-msg{color:var(--usuzumi);text-align:center}
+
+/* はじめ */
+.title-wrap{flex:1;display:grid;place-items:center}
+.title-card{width:min(560px,100%);display:flex;flex-direction:column;gap:16px;align-items:stretch}
+.logo{font-size:clamp(2.4rem,7vw,3.6rem);font-weight:900;text-align:center;letter-spacing:.04em;color:var(--sumi)}
+.logo span{color:var(--mint-koi)}
+.logo small{display:block;font-size:1rem;color:var(--usuzumi);letter-spacing:.1em;font-weight:700}
+.field{display:flex;flex-direction:column;gap:6px;font-weight:700}
+.field input{font:inherit;font-size:1.4rem;padding:12px 16px;border-radius:14px;border:2px solid var(--sen);background:#fff;color:var(--sumi);-webkit-user-select:text;user-select:text}
+.field input:focus{outline:3px solid var(--suisho)}
+.who-list{display:flex;flex-wrap:wrap;gap:8px}
+.who-list button{border:2px solid var(--sen);background:#fff;border-radius:14px;padding:10px 14px;font-size:1.05rem;font-weight:700}
+.err{color:#c4553a;font-weight:700;min-height:1.4em}
+
+/* パートナーえらび */
+.sei-pick{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.sei-pick button{border:4px solid var(--sen);background:#fff;border-radius:24px;padding:12px 8px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:1.3rem;font-weight:900}
+.sei-pick button img{width:100%;max-width:170px;aspect-ratio:1;object-fit:contain}
+.sei-pick button.sel{border-color:var(--suisho);background:#f6f2ff}
+.sei-pick small{font-size:.9rem;color:var(--usuzumi);font-weight:700}
+
+/* まち */
+.town-wrap{display:flex;flex-direction:column;gap:10px}
+.town{position:relative;width:100%;aspect-ratio:16/9;max-height:68vh;border-radius:24px;overflow:hidden;
+  background:#cfe6ef center/cover no-repeat;align-self:center}
+.slot{position:absolute;width:12%;aspect-ratio:1;transform:translate(-50%,-85%);border:0;background:none;padding:0}
+.slot img{width:100%;height:100%;object-fit:contain;object-position:bottom;filter:drop-shadow(0 4px 3px rgba(60,80,70,.25))}
+.slot.empty::after{content:"";position:absolute;left:20%;right:20%;bottom:6%;height:22%;border-radius:50%;
+  border:3px dashed rgba(255,255,255,.9);background:rgba(255,255,255,.25)}
+.slot.empty{pointer-events:none;opacity:0}
+.placing .slot.empty{pointer-events:auto;opacity:1;animation:yure 1.2s ease-in-out infinite}
+.slot.over::after{background:rgba(242,184,75,.5)}
+.slot.pick img{outline:4px solid var(--sango);border-radius:12px}
+@keyframes yure{50%{transform:translate(-50%,-88%)}}
+.tray{display:flex;gap:10px;overflow-x:auto;padding:6px 2px;min-height:96px;align-items:center}
+.tray button{flex:0 0 auto;width:92px;height:92px;border-radius:18px;border:3px solid var(--sen);background:var(--kami);padding:4px;touch-action:none}
+.tray button.sel{border-color:var(--sango);transform:translateY(-4px)}
+.tray img{width:100%;height:100%;object-fit:contain;pointer-events:none}
+.tray .none{color:var(--usuzumi)}
+.partner-btn{border:2px solid var(--sen);background:var(--kami);border-radius:999px;padding:2px 12px 2px 2px;display:flex;align-items:center;gap:4px;font-weight:700}
+.partner-btn img{width:44px;height:44px;object-fit:contain}
+
+/* ステージえらび */
+.stages{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.stages{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stage{border:3px solid var(--sen);background:var(--kami);border-radius:20px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:1.1rem;font-weight:700}
+.stage .who{display:flex;align-items:flex-end;gap:2px}
+.stage .who img{width:64px;height:64px;object-fit:contain}
+.stage .who img.b{width:54px;height:54px}
+.stage.lock{opacity:.5}
+.stage.lock img.b{filter:brightness(0) opacity(.25)}
+.stage .st{font-size:.85rem;color:var(--usuzumi)}
+.stage.done{border-color:var(--mint)}
+
+/* あそぶ画面 */
+.play{display:flex;flex-direction:column;gap:12px}
+.irai{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:end}
+.irai .client{width:96px;height:110px;object-fit:contain;object-position:bottom}
+.fukidashi{position:relative;background:#fff;border:3px solid var(--sumi);border-radius:20px;padding:12px 16px;font-size:1.2rem;font-weight:700;line-height:1.6}
+.fukidashi::before{content:"";position:absolute;left:-14px;bottom:18px;border:10px solid transparent;border-right:14px solid var(--sumi);border-left:0}
+.fukidashi .yomu{float:right;margin:0 0 4px 8px;border:2px solid var(--sen);background:var(--kami);border-radius:999px;padding:4px 10px;font-size:.95rem;font-weight:700}
+.fukidashi .need{display:inline-flex;align-items:center;gap:4px;background:var(--sora);border-radius:10px;padding:0 8px;margin:0 2px}
+.fukidashi .need img{width:30px;height:30px;object-fit:contain}
+.partner{display:flex;flex-direction:column;align-items:center;gap:4px}
+.partner img{width:92px;height:100px;object-fit:contain}
+.partner .hint{padding:6px 14px;font-size:.95rem}
+.p-line{font-weight:700;color:var(--usuzumi);text-align:center;font-size:.95rem;max-width:12em}
+@media (max-width:640px){.irai{grid-template-columns:auto 1fr}.irai .partner{grid-column:1/-1;flex-direction:row;justify-content:center}.irai .client{width:70px;height:80px}.partner img{width:64px;height:70px}}
+.cards{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;min-height:120px;align-content:flex-start}
+.card{width:96px;height:112px;border-radius:16px;border:3px solid var(--sen);background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px;box-sizing:border-box;touch-action:none}
+.card img{width:70px;height:70px;object-fit:contain;pointer-events:none}
+.card span{font-size:.85rem;font-weight:700;pointer-events:none}
+.card.sel{border-color:var(--sango);transform:translateY(-6px) rotate(-3deg);box-shadow:0 8px 14px rgba(239,138,111,.35)}
+.card.glow,.box.glow .in{box-shadow:0 0 0 5px var(--kin),0 0 18px var(--kin)}
+.card.ghost{transform:rotate(-4deg);opacity:.92}
+.boxes{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:12px}
+/* 箱：上に「なふだ」（数えない）、下の四角い枠の中だけがカードを入れる場所 */
+.box{display:flex;flex-direction:column;align-items:center;gap:0}
+.box h3{display:flex;align-items:center;gap:6px;font-size:1.05rem;background:var(--sumi);color:#fff;
+  border-radius:12px 12px 0 0;padding:4px 14px 4px 6px}
+.box h3 img{width:30px;height:30px;object-fit:contain;background:#fff;border-radius:8px;padding:2px}
+.box h3 .iro{width:26px;height:26px;border-radius:50%;border:3px solid #fff}
+.box .in{align-self:stretch;min-height:120px;display:flex;flex-wrap:wrap;gap:6px;justify-content:center;align-content:flex-start;
+  padding:10px;border:4px solid var(--sumi);border-radius:14px;background:#fff}
+.box .in .m{position:relative;width:44px;height:44px;border:0;background:none;padding:0}
+.box .in .m img{width:44px;height:44px;object-fit:contain}
+.box .in .m b{position:absolute;right:-4px;top:-6px;background:var(--sango);color:#fff;border-radius:50%;width:22px;height:22px;font-size:.8rem;display:grid;place-items:center}
+.box.on .in{border-color:var(--suisho);box-shadow:0 0 0 5px rgba(162,142,224,.3)}
+.box.on h3{background:var(--suisho)}
+.box.ok .in{border-color:var(--mint-koi)}
+.box.ok h3{background:var(--mint-koi)}
+.box.over .in{border-color:var(--sango);background:#fff4ef}
+.box .num{font-size:2.2rem;font-weight:900;color:var(--mint-koi);font-variant-numeric:tabular-nums;min-height:1.2em}
+.box.target h3{outline:3px solid var(--kin)}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.pad{display:grid;grid-template-columns:repeat(5,minmax(0,64px));gap:10px;justify-content:center}
+.pad button{height:64px;border-radius:16px;border:3px solid var(--sen);background:#fff;font-size:1.7rem;font-weight:900;font-variant-numeric:tabular-nums}
+.pad button:active{background:var(--sora)}
+.choices{display:flex;flex-wrap:wrap;gap:14px;justify-content:center}
+.choices button{border:3px solid var(--sen);background:#fff;border-radius:20px;padding:10px 18px;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:1.2rem;font-weight:700;min-width:120px}
+.choices img{width:80px;height:80px;object-fit:contain}
+.choices .iro{width:60px;height:60px;border-radius:50%;border:3px solid var(--sen)}
+.choices button.bad{border-color:var(--sango)}
+.step{display:flex;gap:6px;justify-content:center}
+.step i{width:34px;height:8px;border-radius:4px;background:var(--sen)}
+.step i.on{background:var(--mint)}
+
+/* クリア */
+.clear{flex:1;display:grid;place-items:center}
+.clear .panel{display:flex;flex-direction:column;align-items:center;gap:12px;width:min(560px,100%);text-align:center}
+.clear .big{font-size:3rem;font-weight:900;color:var(--mint-koi)}
+.clear .pair{display:flex;align-items:flex-end;gap:12px}
+.clear .pair img{width:110px;height:120px;object-fit:contain}
+.clear .reward{width:170px;height:170px;object-fit:contain;animation:pop .6s ease-out}
+@keyframes pop{0%{transform:scale(.3);opacity:0}70%{transform:scale(1.1)}100%{transform:scale(1)}}
+.coinline{display:flex;align-items:center;gap:8px;font-size:1.4rem;font-weight:900}
+.coinline img{width:36px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:640px){.card{width:84px;height:100px}.card img{width:58px;height:58px}}
