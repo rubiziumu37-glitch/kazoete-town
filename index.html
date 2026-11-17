@@ -53,6 +53,7 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid var(--suisho)
 .field{display:flex;flex-direction:column;gap:6px;font-weight:700}
 .field input{font:inherit;font-size:1.4rem;padding:12px 16px;border-radius:14px;border:2px solid var(--sen);background:#fff;color:var(--sumi);-webkit-user-select:text;user-select:text}
 .field input:focus{outline:3px solid var(--suisho)}
+.field select{font:inherit;font-size:1.2rem;padding:12px 10px;border-radius:14px;border:2px solid var(--sen);background:#fff;color:var(--sumi)}
 .who-list{display:flex;flex-wrap:wrap;gap:8px}
 .who-list button{border:2px solid var(--sen);background:#fff;border-radius:14px;padding:10px 14px;font-size:1.05rem;font-weight:700}
 .err{color:#c4553a;font-weight:700;min-height:1.4em}
@@ -1941,8 +1942,48 @@ function tSettei(box){
     box.querySelector('#cp').onclick = e=>copyText(code, e.currentTarget);
   };
 }
+// ---- 端末が かわった 子を もどす（進みと コインを 先生が 手で 合わせる） ----
+// 「だい dan だんの stage こめまで かなえた」ことに して、コインを coins まいに する。
+// 記録は 足すだけ：前から ある クリアや 建物は 消さない。買ったもの・家・置いた場所は さわらない。
+function modosuKid(no, nick, dan, stage, coins){
+  let p = SAVE.players[no], isNew = false;
+  if(!p){ p = SAVE.players[no] = newPlayer(no, nick); isNew = true; }
+  p.nick = nick;
+  for(let d=1; d<=dan; d++){
+    const n = (d<dan) ? DAN[d].stages.length : stage;
+    for(let s=1; s<=n; s++){
+      const key = `${d}-${s}`;
+      if(!(p.cleared[key]>0)) p.cleared[key] = 1;
+      const b = CHIKU[d-1].reward[s-1];              // その おねがいで もらえる 建物（置くのは 子ども）
+      if(b && !p.owned.includes(b)) p.owned.push(b);
+    }
+    if(!p.chiku.opened.includes(d)) p.chiku.opened.push(d);
+  }
+  syncOpen(p);                                        // 8つ かなえた 段階の つぎの町を ひらく
+  p.coins = coins;
+  p.modoshi = {t: Date.now(), dan, stage, coins};     // 先生が もどした しるし（あとで 見返す ため）
+  writeSave();
+  return isNew;
+}
 function tSonota(box){
+  const danOpt = [1,2,3,4,5].map(d=>`<option value="${d}">だい${d}だん（${esc(DAN[d].name)}）</option>`).join('');
+  const stOpt = [0,1,2,3,4,5,6,7,8].map(s=>`<option value="${s}">${s===0 ? 'まだ ひとつも' : s+'こめまで かなえた'}</option>`).join('');
   box.innerHTML = `<div class="panel" style="display:flex;flex-direction:column;gap:10px">
+      <h3>端末が かわった 子を もどす</h3>
+      <p class="sub-msg" style="text-align:left">故障などで 端末が かわった 子の 進みと コインを、<b>この 端末に</b> 先生が 手で 合わせます。その子が 使う 新しい 端末で 開いてください。<br>
+        もどるもの：進んだ ところ・ひらいた 町・もらった 建物（町に 置くのは 子ども）・コイン。<br>
+        もどらないもの：おみせで 買ったもの・家と 庭の ならべ方・回ごとの きろく。買い直せる ように、コインを 多めに 入れて ください。</p>
+      <div class="bar" style="align-items:flex-end">
+        <label class="field">しゅっせき ばんごう<input id="m-no" inputmode="numeric" maxlength="3" style="width:110px"></label>
+        <label class="field">ニックネーム<input id="m-nick" maxlength="12" style="width:240px"></label>
+        <button class="btn sub small" id="m-fill">あつめた きろくから 入れる</button></div>
+      <div class="bar" style="align-items:flex-end">
+        <label class="field">すすんだ 段階<select id="m-dan">${danOpt}</select></label>
+        <label class="field">その 段階で<select id="m-st">${stOpt}</select></label>
+        <label class="field">コイン<input id="m-coin" inputmode="numeric" maxlength="5" value="0" style="width:130px"></label></div>
+      <div class="err" id="m-err"></div>
+      <div class="bar"><button class="btn" id="m-go">この 端末に もどす</button></div></div>
+    <div class="panel" style="display:flex;flex-direction:column;gap:10px">
       <h3>おためしで あそぶ</h3>
       <p class="sub-msg" style="text-align:left">先生 専用の 番号で、40ステージが ぜんぶ ひらいた 状態で あそべます。子どもの 一覧と きろくには 入りません。</p>
       <div class="bar"><button class="btn" id="try">おためしで あそぶ</button></div></div>
@@ -1957,6 +1998,46 @@ function tSonota(box){
       <h3>先生の 端末の きろくを ぜんぶ けす</h3>
       <p class="sub-msg" style="text-align:left">読みこんだ 子どもの きろくと、せっていの 下書きを けします。子どもの 端末の きろくは けえません。</p>
       <div class="bar"><button class="btn sub" id="wipe">ぜんぶ けす</button></div></div>`;
+  // 端末が かわった 子を もどす
+  const mq = id => box.querySelector(id), mErr = mq('#m-err');
+  const mSay = (t, ok)=>{ mErr.textContent = t; mErr.style.color = ok ? 'var(--mint-koi)' : ''; };
+  let mArmed = '';                                    // たしかめ中の 中身（かえたら たしかめ直す）
+  const mRead = ()=>{
+    const no = parseInt(zen2han(mq('#m-no').value),10), nick = mq('#m-nick').value.trim();
+    const dan = +mq('#m-dan').value, stage = +mq('#m-st').value, coins = parseInt(zen2han(mq('#m-coin').value||'0'),10);
+    if(!(no>=1 && no<=99)) return mSay('ばんごうは 1から99で 入れてください');
+    if(!nick) return mSay('ニックネームを 入れてください');
+    if(!(coins>=0 && coins<=99999)) return mSay('コインは 0から99999で 入れてください');
+    return {no, nick, dan, stage, coins};
+  };
+  const mDisarm = ()=>{ mArmed = ''; mq('#m-go').textContent = 'この 端末に もどす'; };
+  ['#m-no','#m-nick','#m-dan','#m-st','#m-coin'].forEach(id=>{ mq(id).oninput = mDisarm; mq(id).onchange = mDisarm; });
+  // 先生画面に あつめて ある きろく（一覧の 中身）から、進みと コインを 入れる
+  mq('#m-fill').onclick = ()=>{
+    const no = parseInt(zen2han(mq('#m-no').value),10), k = TS.kids[no];
+    mDisarm();
+    if(!(no>=1 && no<=99)) return mSay('先に ばんごうを 入れてください');
+    if(!k) return mSay(`${no}ばんの きろくは、この 端末の 先生画面に ありません。手で 入れてください`);
+    if(k.nick) mq('#m-nick').value = k.nick;
+    const m = /^(\d)-(\d)$/.exec(k.pr||'');
+    if(m){ mq('#m-dan').value = m[1]; mq('#m-st').value = m[2]; }
+    if(k.coins!=null) mq('#m-coin').value = k.coins;
+    mSay(`${no}ばんの きろく（${fmtDay(k.t)}）から 入れました。たしかめてから「この 端末に もどす」を おして ください`, true);
+  };
+  mq('#m-go').onclick = ()=>{
+    const v = mRead(); if(!v) return mDisarm();
+    const sig = JSON.stringify(v), old = SAVE.players[v.no];
+    if(mArmed !== sig){                               // 1回目：なにが おきるかを 見せて たしかめる
+      mArmed = sig; mq('#m-go').textContent = 'もう いちど おすと もどします';
+      const where = `だい${v.dan}だん${v.stage ? ' '+v.stage+'こめまで' : 'の はじめ'}`;
+      return mSay(old
+        ? `${v.no}ばん（${old.nick}）は この 端末に もう あります。コインを ${old.coins} → ${v.coins} に 直し、進みを「${where}」まで 足します（進みが へる ことは ありません。買ったもの・家は そのまま）`
+        : `${v.no}ばん ${v.nick} を、「${where}」・コイン ${v.coins} で この 端末に 作ります`, true);
+    }
+    const isNew = modosuKid(v.no, v.nick, v.dan, v.stage, v.coins);
+    mDisarm();
+    mSay(`${v.no}ばん ${v.nick} を ${isNew ? '作りました' : '直しました'}。「おわる」→「つづきから」の ${v.no}ばんで はじめられます`, true);
+  };
   box.querySelector('#try').onclick = ()=>{
     let p = SAVE.players.sensei;
     if(!p){ p = SAVE.players.sensei = newPlayer('sensei', 'せんせい'); p.teacher = true; p.partner = 'shizuku'; p.coins = 3000; }

@@ -47,6 +47,7 @@ button:focus-visible,[role=button]:focus-visible{outline:4px solid var(--suisho)
 .field{display:flex;flex-direction:column;gap:6px;font-weight:700}
 .field input{font:inherit;font-size:1.4rem;padding:12px 16px;border-radius:14px;border:2px solid var(--sen);background:#fff;color:var(--sumi);-webkit-user-select:text;user-select:text}
 .field input:focus{outline:3px solid var(--suisho)}
+.field select{font:inherit;font-size:1.2rem;padding:12px 10px;border-radius:14px;border:2px solid var(--sen);background:#fff;color:var(--sumi)}
 .who-list{display:flex;flex-wrap:wrap;gap:8px}
 .who-list button{border:2px solid var(--sen);background:#fff;border-radius:14px;padding:10px 14px;font-size:1.05rem;font-weight:700}
 .err{color:#c4553a;font-weight:700;min-height:1.4em}
