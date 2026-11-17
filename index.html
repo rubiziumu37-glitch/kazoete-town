@@ -1970,13 +1970,12 @@ function tSonota(box){
   const stOpt = [0,1,2,3,4,5,6,7,8].map(s=>`<option value="${s}">${s===0 ? 'まだ ひとつも' : s+'こめまで かなえた'}</option>`).join('');
   box.innerHTML = `<div class="panel" style="display:flex;flex-direction:column;gap:10px">
       <h3>端末が かわった 子を もどす</h3>
-      <p class="sub-msg" style="text-align:left">故障などで 端末が かわった 子の 進みと コインを、<b>この 端末に</b> 先生が 手で 合わせます。その子が 使う 新しい 端末で 開いてください。<br>
+      <p class="sub-msg" style="text-align:left">故障などで 端末が かわった 子の 進みと コインを、<b>この 端末に</b> 先生が 手で 合わせます。その子が 使う 新しい 端末で 開いてください。前の 進みと コインは、先生の 端末の「クラスの いちらん」で 見られます（きろくを 読みこんで あれば）。<br>
         もどるもの：進んだ ところ・ひらいた 町・もらった 建物（町に 置くのは 子ども）・コイン。<br>
         もどらないもの：おみせで 買ったもの・家と 庭の ならべ方・回ごとの きろく。買い直せる ように、コインを 多めに 入れて ください。</p>
       <div class="bar" style="align-items:flex-end">
         <label class="field">しゅっせき ばんごう<input id="m-no" inputmode="numeric" maxlength="3" style="width:110px"></label>
-        <label class="field">ニックネーム<input id="m-nick" maxlength="12" style="width:240px"></label>
-        <button class="btn sub small" id="m-fill">あつめた きろくから 入れる</button></div>
+        <label class="field">ニックネーム<input id="m-nick" maxlength="12" style="width:240px"></label></div>
       <div class="bar" style="align-items:flex-end">
         <label class="field">すすんだ 段階<select id="m-dan">${danOpt}</select></label>
         <label class="field">その 段階で<select id="m-st">${stOpt}</select></label>
@@ -2012,18 +2011,6 @@ function tSonota(box){
   };
   const mDisarm = ()=>{ mArmed = ''; mq('#m-go').textContent = 'この 端末に もどす'; };
   ['#m-no','#m-nick','#m-dan','#m-st','#m-coin'].forEach(id=>{ mq(id).oninput = mDisarm; mq(id).onchange = mDisarm; });
-  // 先生画面に あつめて ある きろく（一覧の 中身）から、進みと コインを 入れる
-  mq('#m-fill').onclick = ()=>{
-    const no = parseInt(zen2han(mq('#m-no').value),10), k = TS.kids[no];
-    mDisarm();
-    if(!(no>=1 && no<=99)) return mSay('先に ばんごうを 入れてください');
-    if(!k) return mSay(`${no}ばんの きろくは、この 端末の 先生画面に ありません。手で 入れてください`);
-    if(k.nick) mq('#m-nick').value = k.nick;
-    const m = /^(\d)-(\d)$/.exec(k.pr||'');
-    if(m){ mq('#m-dan').value = m[1]; mq('#m-st').value = m[2]; }
-    if(k.coins!=null) mq('#m-coin').value = k.coins;
-    mSay(`${no}ばんの きろく（${fmtDay(k.t)}）から 入れました。たしかめてから「この 端末に もどす」を おして ください`, true);
-  };
   mq('#m-go').onclick = ()=>{
     const v = mRead(); if(!v) return mDisarm();
     const sig = JSON.stringify(v), old = SAVE.players[v.no];
